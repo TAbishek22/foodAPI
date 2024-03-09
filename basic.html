@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            body {
+                width: 100%;
+                height: 100vh;
+            }
+            table,
+            th,
+            td {
+                border: 1px solid black;
+                border-radius: 10px;
+                padding: 5px;
+                text-align: center;
+            }
+            tbody td {
+                height: 20px;
+                padding: 10px;
+            }
+            table {
+                width: 50vw;
+                height: 100vh;
+            }
+            button {
+                margin: 10px;
+                height: 30px;
+                background-color: aquamarine;
+                border-color: none;
+                border-width: 2px;
+                width: 70px;
+                border-radius: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Fetching data in front end</h1>
+        <table>
+            <thead class="b">
+                <tr>
+                    <th>Number of items</th>
+                    <th>allergens</th>
+                    <th>food_group</th>
+                    <th>description</th>
+                    <th>ingredients</th>
+                    <th>serving_size</th>
+                    <th>certifications</th>
+                    <th>food_item_name</th>
+                    <th>health_benefits</th>
+                    <th>country_of_origin</th>
+                    <th>preparation_methods</th>
+                    <th>dietary_restrictions</th>
+                    <th>brand_or_manufacturer</th>
+                    <th>nutritional_information</th>
+                    <th>Buttons</th>
+                </tr>
+            </thead>
+
+            <tbody id="body"></tbody>
+        </table>
+
+        <script>
+            fetch("http://localhost:3200/getfooddata")
+                .then((res) => res.json())
+                .then((data) => {
+                    var i = 1;
+                    const body = document.getElementById("body");
+                    body.innerHTML = "";
+                    data.map((food) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                                  <td>${i++}</td>
+                                  <td>${food["allergens"]}</td>
+                                  <td>${food.food_group}</td>
+                                  <td>${food.description}</td>
+                                  <td>${food["ingredients"]}</td>
+                                  <td>${food.serving_size}</td>
+                                  <td>${food["certifications"]}</td>
+                                  <td>${food.food_item_name}</td>
+                                  <td>${food["health_benefits"]}</td>
+                                  <td>${food.country_of_origin}</td>
+                                  <td>${food["preparation_methods"]}</td>
+                                  <td>${food["dietary_restrictions"]}</td>
+                                  <td>${food.brand_or_manufacturer}</td>
+                                  `;
+
+                        const td = document.createElement("td");
+                        td.innerHTML = "";
+                        for (var key in food.nutritional_information) {
+                            const pa = document.createElement("p");
+                            pa.innerHTML = `${key}  -->  ${food.nutritional_information[key]}`;
+                            td.appendChild(pa);
+                        }
+                        row.appendChild(td);
+
+                        const td2 = document.createElement("td");
+                        td2.innerHTML = `
+                        <button onclick="editFood(this)">Edit</button>
+                        <button onclick="deleteFood('${food._id}')">Delete</Button>
+                        <button  onclick="save(this,'${food._id}')" style="display:none;">Save</button>
+                            `;
+                        row.appendChild(td2);
+
+                        body.appendChild(row);
+                    });
+                })
+                .catch((e) => console.log(e));
+
+            async function deleteFood(foodID) {
+                // console.log(foodID);
+                try {
+                    const deletes = await fetch(
+                        `http://localhost:3200/foodDelete/${foodID}`,
+                        {
+                            method: "DELETE",
+                        }
+                    );
+                    const data = await deletes.json();
+                    location.reload();
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+            async function editFood(button) {
+                try {
+                    const row = button.parentNode.parentNode;
+                    const cells = row.querySelectorAll("td:not(:last-child)");
+                    cells.forEach((c, i) => {
+                        if (i == 13) {
+                            c.innerHTML = "";
+                            const text = c.innerText;
+                            c.innerHTML = `<input id="text" type="text" value"${text}">`;
+                        } else {
+                            const text = c.innerText;
+                            c.innerHTML = `<input id="text" type="text" value"${text}">`;
+                        }
+                    });
+
+                    const editButton = row.querySelector("button:nth-child(1)");
+                    const saveButton = row.querySelector("button:nth-child(3)");
+                    editButton.style.display = "none";
+                    saveButton.style.display = "block";
+
+                    //console.log(saveButton);
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+            async function save(button, id) {
+                try {
+                    const row = button.parentNode.parentNode;
+                    //const cells = row.querySelectorAll("td:not(:last-child)");
+                    const cell = row.querySelectorAll("input");
+                    let obj = {};
+                    cell.forEach((c) => {
+                        obj = {
+                            value1: [c.value],
+                        };
+                        //const input = text.getElementById("input");
+                    });
+                    console.log(obj);
+                    const replace = await fetch(
+                        `http://localhost:3200/edit/${id}`,
+                        {
+                            method: "PUT",
+                            body: JSON.stringify(obj)
+                        }
+                    );
+                      location.reload();
+                } catch (e) {
+                    console.log("ERROR" + e);
+                }
+            }
+        </script>
+    </body>
+</html>
